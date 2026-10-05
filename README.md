@@ -8,3 +8,7 @@ A simple CLI password generator written in Python. Supports custom length, digit
 - Guaranteed at least one uppercase and one lowercase letter
 - Copies the generated password to the clipboard
 - Optionally saves passwords to `Passwords.txt`
+
+How to install pyperclip
+ctrl+shift+p --> python: select interpreter (in VsCode)
+py -m pip install pyperclip
