@@ -1,78 +1,83 @@
 import secrets
-from pathlib import Path
 import pyperclip
+from pathlib import Path
 
-def ChoiceYN(output):
+def ask_yn(text: str) -> bool:
     while True:
-        YN = input(str(output)).strip().lower()
-        if YN != 'n':
+        answer = input(text).strip().lower()
+        if answer == 'y':
             return True
-        return False
-        # if YN == 'y':
-        #     YN = 1
-        #     return bool(YN)
-        # elif YN == 'n':
-        #     YN = 0
-        #     return bool(YN)
+        elif answer == 'n':
+            return False
+        print("Please enter 'y' or 'n'.")
 
 
-def GeneratePassword():
-    while True:
-        try:
-            length = int(input('Какой длинны пароль создать? (5 - 100): '))
-            if length > 4 and length <= 100:
+def save_to_txt(label: str, password: str):
+    file_path = Path(__file__).parent / "Passwords.txt"
+    with open(file_path, 'a', encoding='utf-8') as file:
+        file.write(f"{label}:  {password} \n")
 
-                password = []
-                required = []
 
-                Letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-                lower = 'abcdefghijklmnopqrstuvwxyz'
-                nums = '0123456789'
-                punctuation = '!\"#$%&\'()*+,-./:;<=>?@[]^_`{|}~'
-                alphabet = Letters
+def generate_password(length: int, use_digits: bool, use_special_symbols: bool):
+    required = []
 
-                UseNums = ChoiceYN('Использовать Цифры? 0123456789 \n(y/n): ')
-                UseSpecialS = ChoiceYN('Использовать Спец Символы? \n!\"#$%&\'()*+,-./:;<=>?@[]^_`{|}~ \n(y/n): ')
+    letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    lower = 'abcdefghijklmnopqrstuvwxyz'
+    digits = '0123456789'
+    punctuation = '!\"#$%&\'()*+,-./:;<=>?@[]^_`{|}~'
+    alphabet = letters
 
-                if UseNums:
-                    alphabet += nums
-                    required.append(secrets.choice(nums))
-                if UseSpecialS:
-                    alphabet += punctuation
-                    required.append(secrets.choice(punctuation))
-                required.append(secrets.choice(upper))
-                required.append(secrets.choice(lower))  
-                
-
-                if len(required) > length:
-                    print('Длина пароля слишком мала для всех условий')
-                    continue
-                
-
-                password = list(required)
-                for _ in range(length - len(required)):
-                    password += secrets.choice(alphabet)
-                secrets.SystemRandom().shuffle(password)
-                
-                CompletePassword = ''.join(password)
-                SavePass = ChoiceYN(f'Сохранить Пароль в файл? {CompletePassword}')
-                if SavePass:
-                    file_path = Path(r"C:\Users\User\Desktop\Python\PasswordGen\Passwords.txt")
-                    NamePassword = input('Для чего пароль: ')
-                    with open(file_path, 'a', encoding='utf-8') as file:
-                        file.write(f"{NamePassword}:  {CompletePassword} \n")
-                        
-                pyperclip.copy(CompletePassword)
-                return CompletePassword
-            
-            else:
-                print('Ошибка длинны пароля.')
-        except ValueError:
-            print('Ошибка значения длинны пароля.')
-            return 'Ошибка значения длинны пароля.'
+    if use_digits:
+        alphabet += digits
+        required.append(secrets.choice(digits))
+    if use_special_symbols:
+        alphabet += punctuation
+        required.append(secrets.choice(punctuation))
+    required.append(secrets.choice(upper))
+    required.append(secrets.choice(lower))  
     
+    if len(required) > length:
+        print('ERROR\nToo small length for all selected requirements')
+        return
+
+    for _ in range(length - len(required)):
+        required.append(secrets.choice(alphabet))
+    secrets.SystemRandom().shuffle(required)
+    
+    complete_password = ''.join(required)
+    return complete_password
+        
+
+def main():
+    try:
+        password_length = int(input('Length password (5-100): '))
+    except ValueError:
+        print('ERROR\nLength must be Integer')
+        return
+    if password_length > 100 or password_length < 5:
+        print('ERROR\nLength must be 5 - 100')
+        return
+    
+    use_digits = ask_yn('Use digits? 0123456789\n(y/n): ')
+    use_special_symbols = ask_yn('Use special characters? \'!\"#$%&\'()*+,-./:;<=>?@[]^_`{|}~\n(y/n): ')
+
+    password = generate_password(password_length, use_digits, use_special_symbols)
+    if password == None:
+        return
+    print(f'\nYour password:\n{password}\n')
+
+    try:
+        pyperclip.copy(password)
+        print('Password copied to clipboard')
+    except pyperclip.PyperclipException:
+        print('Could not copy to clipboard. Make sure pyperclip works.')
+
+    if ask_yn('\nSave your password to .txt file?: '):
+
+        label_password = input('Label password? ')
+        save_to_txt(label_password, password)
 
 
-
-print(GeneratePassword())
+if __name__ == "__main__":
+    main()
